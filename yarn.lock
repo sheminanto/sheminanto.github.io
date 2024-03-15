@@ -33,7 +33,7 @@
   resolved "https://registry.yarnpkg.com/@antfu/utils/-/utils-0.7.7.tgz#26ea493a831b4f3a85475e7157be02fb4eab51fb"
   integrity sha512-gFPqTG7otEJ8uP6wrhDv6mqwGWYZKNvAcCq6u9hOj0c+IKCEsY4L1oC9trPq2SaWIzAfHvqfBDxF591JkMf+kg==
 
-"@astrojs/check@^0.5.6":
+"@astrojs/check@^0.5.9":
   version "0.5.9"
   resolved "https://registry.yarnpkg.com/@astrojs/check/-/check-0.5.9.tgz#dcbbe0241ca5da8b05865a715ec85f905ea3048b"
   integrity sha512-+QsQMtYq4oso+gmilJC9HLmdi0glZ+04V/VyyTTPry7n21jqjX9SfgDpLGxMk5cwPC/vwZMkn6ORGPnkZS/L5w==
@@ -101,12 +101,36 @@
     unist-util-visit "^5.0.0"
     vfile "^6.0.1"
 
-"@astrojs/mdx@2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@astrojs/mdx/-/mdx-2.1.1.tgz#0c9c9f46a19901b6ca436527e95093af5f90abc9"
-  integrity sha512-AgGFdE7HOGmoFooGvMSatkA9FiSKwyVW7ImHot/bXJ6uAbFfu6iG2ht18Cf1pT22Hda/6iSCGWusFvBv0/EnKQ==
+"@astrojs/markdown-remark@4.3.0":
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/@astrojs/markdown-remark/-/markdown-remark-4.3.0.tgz#040ae4d651eda32f8910e2caa2ad414b976d3abc"
+  integrity sha512-iZOgYj/yNDvBRfKqkGuAvjeONhjQPq8Uk3HjyIgcTK5valq03NiUgSc5Ovq00yUVBeYJ/5EDx23c8xqtkkBlPw==
   dependencies:
-    "@astrojs/markdown-remark" "4.2.1"
+    "@astrojs/prism" "^3.0.0"
+    github-slugger "^2.0.0"
+    hast-util-from-html "^2.0.0"
+    hast-util-to-text "^4.0.0"
+    import-meta-resolve "^4.0.0"
+    mdast-util-definitions "^6.0.0"
+    rehype-raw "^7.0.0"
+    rehype-stringify "^10.0.0"
+    remark-gfm "^4.0.0"
+    remark-parse "^11.0.0"
+    remark-rehype "^11.0.0"
+    remark-smartypants "^2.0.0"
+    shiki "^1.1.2"
+    unified "^11.0.4"
+    unist-util-remove-position "^5.0.0"
+    unist-util-visit "^5.0.0"
+    unist-util-visit-parents "^6.0.0"
+    vfile "^6.0.1"
+
+"@astrojs/mdx@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@astrojs/mdx/-/mdx-2.2.0.tgz#1b3046d1777fab8e5e54b81997efc3e4087cf4ab"
+  integrity sha512-EkcCniYdGwsh9k5LknqRrz/UyOnMNXdRk7fgDAw/zUDKnm7zgQAG8hIx0FxG1L2IINxLfu7IcjgZb3f5TFpxKw==
+  dependencies:
+    "@astrojs/markdown-remark" "4.3.0"
     "@mdx-js/mdx" "^3.0.0"
     acorn "^8.11.2"
     es-module-lexer "^1.4.1"
@@ -1292,7 +1316,7 @@
   dependencies:
     "@typescript-eslint/utils" "5.62.0"
 
-"@typescript-eslint/parser@^7.1.1":
+"@typescript-eslint/parser@^7.2.0":
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/parser/-/parser-7.2.0.tgz#44356312aea8852a3a82deebdacd52ba614ec07a"
   integrity sha512-5FKsVcHTk6TafQKQbuIVkXq58Fnbkd2wDL4LB7AURN7RUOu1utVP+G8+6u3ZhEroW3DF6hyo3ZEXxgKgp4KeCg==
@@ -1754,7 +1778,7 @@ astro-eslint-parser@^0.16.3:
     espree "^9.0.0"
     semver "^7.3.8"
 
-astro-expressive-code@^0.33.4:
+astro-expressive-code@^0.33.5:
   version "0.33.5"
   resolved "https://registry.yarnpkg.com/astro-expressive-code/-/astro-expressive-code-0.33.5.tgz#31ce649a8b8838ee0a6f6506406d9453ecd1a955"
   integrity sha512-9JAyllueMUN8JTl/h/yTdbKinNmfalEWcV11s3lSf/UJQbAZfWJuy+IlGcArZDI/CmD21GXhFHLqYthpdY33ug==
@@ -2891,7 +2915,7 @@ eslint-plugin-markdown@^4.0.1:
   dependencies:
     mdast-util-from-markdown "^0.8.5"
 
-eslint-plugin-perfectionist@^2.6.0:
+eslint-plugin-perfectionist@^2.7.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-perfectionist/-/eslint-plugin-perfectionist-2.7.0.tgz#28ae9d41813677ad5a19b0682c29090d7bbaa871"
   integrity sha512-RpSMc0T0DT9DlOj4APzwlAjCqQMxFdsIYlupe73eDkKLn1mMK7fVw2z3nj2y822szKOpvHA7bDa56ySOlr4GXw==
@@ -2900,7 +2924,7 @@ eslint-plugin-perfectionist@^2.6.0:
     minimatch "^9.0.3"
     natural-compare-lite "^1.4.0"
 
-eslint-plugin-regexp@^2.2.0:
+eslint-plugin-regexp@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-regexp/-/eslint-plugin-regexp-2.3.0.tgz#b72d9252ca3206b292e51eef49910d896c9a3723"
   integrity sha512-T8JUs7ssRGbuXb+CGfdUJbcxTBMCNOpNqNBLuC8JUKAEIez72J37RaOi5/4dAUsGz92GbWVtqTLPSJZGyP/sQA==
@@ -3733,6 +3757,16 @@ hast-util-to-parse5@^8.0.0:
     space-separated-tokens "^2.0.0"
     web-namespaces "^2.0.0"
     zwitch "^2.0.0"
+
+hast-util-to-text@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/hast-util-to-text/-/hast-util-to-text-4.0.0.tgz#7f33a45d0bf7981ead44e82d9d8d75f511b3642f"
+  integrity sha512-EWiE1FSArNBPUo1cKWtzqgnuRQwEeQbQtnFJRYV1hb1BWDgrAlBU0ExptvZMM/KSA82cDpm2sFGf3Dmc5Mza3w==
+  dependencies:
+    "@types/hast" "^3.0.0"
+    "@types/unist" "^3.0.0"
+    hast-util-is-element "^3.0.0"
+    unist-util-find-after "^5.0.0"
 
 hast-util-whitespace@^2.0.0:
   version "2.0.1"
@@ -6324,7 +6358,7 @@ shebang-regex@^3.0.0:
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-3.0.0.tgz#ae16f1644d873ecad843b0307b143362d4c42172"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
 
-shiki@^1.1.7:
+shiki@^1.1.2, shiki@^1.1.7:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/shiki/-/shiki-1.2.0.tgz#7f1b6917cbb10daa1ac3ae62fa29b40c494e2812"
   integrity sha512-xLhiTMOIUXCv5DqJ4I70GgQCtdlzsTqFLZWcMHHG3TAieBUbvEGthdrlPDlX4mL/Wszx9C6rEcxU6kMlg4YlxA==
@@ -6968,6 +7002,14 @@ unified@^11.0.0, unified@^11.0.4:
     is-plain-obj "^4.0.0"
     trough "^2.0.0"
     vfile "^6.0.0"
+
+unist-util-find-after@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/unist-util-find-after/-/unist-util-find-after-5.0.0.tgz#3fccc1b086b56f34c8b798e1ff90b5c54468e896"
+  integrity sha512-amQa0Ep2m6hE2g72AugUItjbuM8X8cGQnFoHk0pGfrFeT9GZhzN5SW8nRsiGKK7Aif4CrACPENkA6P/Lw6fHGQ==
+  dependencies:
+    "@types/unist" "^3.0.0"
+    unist-util-is "^6.0.0"
 
 unist-util-is@^5.0.0:
   version "5.2.1"
