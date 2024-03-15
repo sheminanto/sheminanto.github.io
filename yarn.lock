@@ -49,15 +49,15 @@
   resolved "https://registry.yarnpkg.com/@astrojs/compiler/-/compiler-1.8.2.tgz#f305d5724c45a9932a8ef4e87b2e7227d15d1c2b"
   integrity sha512-o/ObKgtMzl8SlpIdzaxFnt7SATKPxu4oIP/1NL+HDJRzxfJcAkOTAb/ZKMRyULbz4q+1t2/DAebs2Z1QairkZw==
 
-"@astrojs/compiler@^2.0.0", "@astrojs/compiler@^2.5.3", "@astrojs/compiler@^2.7.0":
+"@astrojs/compiler@^2.0.0", "@astrojs/compiler@^2.7.0":
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/@astrojs/compiler/-/compiler-2.7.0.tgz#023799f2fefd2aa8579ea6f802226387e5922f74"
   integrity sha512-XpC8MAaWjD1ff6/IfkRq/5k1EFj6zhCNqXRd5J43SVJEBj/Bsmizkm8N0xOYscGcDFQkRgEw6/eKnI5x/1l6aA==
 
-"@astrojs/internal-helpers@0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@astrojs/internal-helpers/-/internal-helpers-0.2.1.tgz#4e2e6aabaa9819f17119aa10f413c4d6122c94cf"
-  integrity sha512-06DD2ZnItMwUnH81LBLco3tWjcZ1lGU9rLCCBaeUCGYe9cI0wKyY2W3kDyoW1I6GmcWgt1fu+D1CTvz+FIKf8A==
+"@astrojs/internal-helpers@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@astrojs/internal-helpers/-/internal-helpers-0.3.0.tgz#c499d147182692023ce7320887abe0cbff3c7d58"
+  integrity sha512-tGmHvrhpzuz0JBHaJX8GywN9g4rldVNHtkoVDC3m/DdzBO70jGoVuc0uuNVglRYnsdwkbG0K02Iw3nOOR3/Y4g==
 
 "@astrojs/language-server@^2.8.1":
   version "2.8.3"
@@ -80,26 +80,6 @@
     volar-service-typescript-twoslash-queries "0.0.34"
     vscode-html-languageservice "^5.1.2"
     vscode-uri "^3.0.8"
-
-"@astrojs/markdown-remark@4.2.1":
-  version "4.2.1"
-  resolved "https://registry.yarnpkg.com/@astrojs/markdown-remark/-/markdown-remark-4.2.1.tgz#2fba4aba6563914675cca759b635144b6c53e704"
-  integrity sha512-2RQBIwrq+2qPYtp99bH+eL5hfbK0BoxXla85lHsRpIX/IsGqFrPX6pXI2cbWPihBwGbKCdxS6uZNX2QerZWwpQ==
-  dependencies:
-    "@astrojs/prism" "^3.0.0"
-    github-slugger "^2.0.0"
-    import-meta-resolve "^4.0.0"
-    mdast-util-definitions "^6.0.0"
-    rehype-raw "^7.0.0"
-    rehype-stringify "^10.0.0"
-    remark-gfm "^4.0.0"
-    remark-parse "^11.0.0"
-    remark-rehype "^11.0.0"
-    remark-smartypants "^2.0.0"
-    shikiji "^0.9.18"
-    unified "^11.0.4"
-    unist-util-visit "^5.0.0"
-    vfile "^6.0.1"
 
 "@astrojs/markdown-remark@4.3.0":
   version "4.3.0"
@@ -867,11 +847,6 @@
     unist-util-visit "^5.0.0"
     vfile "^6.0.0"
 
-"@medv/finder@^3.1.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@medv/finder/-/finder-3.2.0.tgz#dffeb5b04d754ca4e575bbbee89b24935277908e"
-  integrity sha512-JmU7JIBwyL8RAzefvzALT4sP2M0biGk8i2invAgpQmma/QgfsaqoHIvJ7S0YC8n9hUVG8X3Leul2nGa06PvhbQ==
-
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -1292,7 +1267,7 @@
   dependencies:
     "@types/node" "*"
 
-"@typescript-eslint/eslint-plugin@^7.1.1":
+"@typescript-eslint/eslint-plugin@^7.2.0":
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-7.2.0.tgz#5a5fcad1a7baed85c10080d71ad901f98c38d5b7"
   integrity sha512-mdekAHOqS9UjlmyF/LSs6AIEvfceV749GFxoBAjwAv0nkevfKHWQFDMcBZWUiIC5ft6ePWivXoS36aKQ0Cy3sw==
@@ -1795,14 +1770,14 @@ astro-icon@^1.1.0:
     "@iconify/types" "^2.0.0"
     "@iconify/utils" "^2.1.5"
 
-astro@4.4.15:
-  version "4.4.15"
-  resolved "https://registry.yarnpkg.com/astro/-/astro-4.4.15.tgz#1eb10278189647ef72d4a9502a8434ad7905facb"
-  integrity sha512-RTiAnlO8hDp6GqMVvaeJxyuCJhHNEho09lHshMNQBqgRabYPOJGW0HZZrbLRGNOqN9I14ivhZIunYGgAaGQpWw==
+astro@4.5.5:
+  version "4.5.5"
+  resolved "https://registry.yarnpkg.com/astro/-/astro-4.5.5.tgz#1d52fbdcdf3cdd6c7ba51eeb87da535cb2b53c77"
+  integrity sha512-gZ3jR06dLmY9/SMkKMr+3pRSrUjhuwjnXt+9abFJV3WGwhCnLZbSNsTBrLMsaFHpAS1ReJChcTWyKRCvs/jCIQ==
   dependencies:
-    "@astrojs/compiler" "^2.5.3"
-    "@astrojs/internal-helpers" "0.2.1"
-    "@astrojs/markdown-remark" "4.2.1"
+    "@astrojs/compiler" "^2.7.0"
+    "@astrojs/internal-helpers" "0.3.0"
+    "@astrojs/markdown-remark" "4.3.0"
     "@astrojs/telemetry" "3.0.4"
     "@babel/core" "^7.23.3"
     "@babel/generator" "^7.23.3"
@@ -1810,7 +1785,6 @@ astro@4.4.15:
     "@babel/plugin-transform-react-jsx" "^7.22.5"
     "@babel/traverse" "^7.23.3"
     "@babel/types" "^7.23.3"
-    "@medv/finder" "^3.1.0"
     "@types/babel__core" "^7.20.4"
     acorn "^8.11.2"
     aria-query "^5.3.0"
@@ -1841,7 +1815,6 @@ astro@4.4.15:
     js-yaml "^4.1.0"
     kleur "^4.1.4"
     magic-string "^0.30.3"
-    mdast-util-to-hast "13.0.2"
     mime "^3.0.0"
     ora "^7.0.1"
     p-limit "^5.0.0"
@@ -1852,8 +1825,7 @@ astro@4.4.15:
     rehype "^13.0.1"
     resolve "^1.22.4"
     semver "^7.5.4"
-    shikiji "^0.9.19"
-    shikiji-core "^0.9.19"
+    shiki "^1.1.2"
     string-width "^7.0.0"
     strip-ansi "^7.1.0"
     tsconfck "^3.0.0"
@@ -1864,6 +1836,7 @@ astro@4.4.15:
     which-pm "^2.1.1"
     yargs-parser "^21.1.1"
     zod "^3.22.4"
+    zod-to-json-schema "^3.22.4"
   optionalDependencies:
     sharp "^0.32.6"
 
@@ -4672,20 +4645,6 @@ mdast-util-phrasing@^4.0.0:
     "@types/mdast" "^4.0.0"
     unist-util-is "^6.0.0"
 
-mdast-util-to-hast@13.0.2:
-  version "13.0.2"
-  resolved "https://registry.yarnpkg.com/mdast-util-to-hast/-/mdast-util-to-hast-13.0.2.tgz#74c0a9f014bb2340cae6118f6fccd75467792be7"
-  integrity sha512-U5I+500EOOw9e3ZrclN3Is3fRpw8c19SMyNZlZ2IS+7vLsNzb2Om11VpIVOR+/0137GhZsFEF6YiKD5+0Hr2Og==
-  dependencies:
-    "@types/hast" "^3.0.0"
-    "@types/mdast" "^4.0.0"
-    "@ungap/structured-clone" "^1.0.0"
-    devlop "^1.0.0"
-    micromark-util-sanitize-uri "^2.0.0"
-    trim-lines "^3.0.0"
-    unist-util-position "^5.0.0"
-    unist-util-visit "^5.0.0"
-
 mdast-util-to-hast@^13.0.0:
   version "13.1.0"
   resolved "https://registry.yarnpkg.com/mdast-util-to-hast/-/mdast-util-to-hast-13.1.0.tgz#1ae54d903150a10fe04d59f03b2b95fd210b2124"
@@ -6365,18 +6324,6 @@ shiki@^1.1.2, shiki@^1.1.7:
   dependencies:
     "@shikijs/core" "1.2.0"
 
-shikiji-core@0.9.19, shikiji-core@^0.9.19:
-  version "0.9.19"
-  resolved "https://registry.yarnpkg.com/shikiji-core/-/shikiji-core-0.9.19.tgz#227975e998eb2a579cf83de30977762be3802507"
-  integrity sha512-AFJu/vcNT21t0e6YrfadZ+9q86gvPum6iywRyt1OtIPjPFe25RQnYJyxHQPMLKCCWA992TPxmEmbNcOZCAJclw==
-
-shikiji@^0.9.18, shikiji@^0.9.19:
-  version "0.9.19"
-  resolved "https://registry.yarnpkg.com/shikiji/-/shikiji-0.9.19.tgz#351a32b291a04cf9a6b69933f8044fe135b70f6f"
-  integrity sha512-Kw2NHWktdcdypCj1GkKpXH4o6Vxz8B8TykPlPuLHOGSV8VkhoCLcFOH4k19K4LXAQYRQmxg+0X/eM+m2sLhAkg==
-  dependencies:
-    shikiji-core "0.9.19"
-
 side-channel@^1.0.4:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/side-channel/-/side-channel-1.0.6.tgz#abd25fb7cd24baf45466406b1096b7831c9215f2"
@@ -7498,6 +7445,11 @@ yoga-wasm-web@^0.3.3:
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/yoga-wasm-web/-/yoga-wasm-web-0.3.3.tgz#eb8e9fcb18e5e651994732f19a220cb885d932ba"
   integrity sha512-N+d4UJSJbt/R3wqY7Coqs5pcV0aUj2j9IaQ3rNj9bVCLld8tTGKRa2USARjnvZJWVx1NDmQev8EknoczaOQDOA==
+
+zod-to-json-schema@^3.22.4:
+  version "3.22.4"
+  resolved "https://registry.yarnpkg.com/zod-to-json-schema/-/zod-to-json-schema-3.22.4.tgz#f8cc691f6043e9084375e85fb1f76ebafe253d70"
+  integrity sha512-2Ed5dJ+n/O3cU383xSY28cuVi0BCQhF8nYqWU5paEpl7fVdqdAmiLdqLyfblbNdfOFwFfi/mqU4O1pwc60iBhQ==
 
 zod@^3.22.4:
   version "3.22.4"
