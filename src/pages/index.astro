@@ -5,20 +5,52 @@ import PageLayout from "@/layouts/Base.astro";
 
 <PageLayout meta={{ title: "Shemin" }}>
 	<section>
-		<h1 class="title mb-6">Hello World!</h1>
+		<h1 class="title mb-6 text-3xl">Hi, I'm Shemin</h1>
 		<p class="mb-4">
-			Hi, I’m a theme for Astro, an example of how you can use this starter to create a personal
-			blog. If you want to know more about how you can customise me, add more posts, and make it
-			your own, click on the github icon link below and it will take you to my repo.
+			A software engineer with 2 years of industry experience, specializing in Ruby on Rails and
+			React.js for 1.7 years. Skilled in developing npm packages, Ruby gems, and Chrome extensions.
 		</p>
 		<SocialList />
 	</section>
 	<section class="mt-10">
 		<h2 class="title mb-4 text-xl">Professional experience</h2>
-		<ul class="space-y-4">
-			<li>Something</li>
-			<li>Something</li>
-		</ul>
+		<div class="space-y-6 pl-2">
+			<div>
+				<div class="flex items-center justify-between">
+					<h3 class="text-base">Software Engineer: BigBinary</h3>
+					<h3 class="text-base">Aug 2022 - Present</h3>
+				</div>
+				<ul class="mt-2 list-disc space-y-1 pl-6">
+					<li>
+						Contributed to the development of
+						<a href="https://www.neeto.com/" target="_blank"><span class="underline">neeto</span></a
+						>
+						apps utilizing Rails and React.
+					</li>
+					<li>
+						Developed npm packages, Ruby gems, and Chrome extensions as part of ongoing projects.
+					</li>
+				</ul>
+			</div>
+			<div>
+				<div class="flex items-center justify-between pl-2">
+					<h3 class="text-base">Software Engineer Intern: Fynarfin</h3>
+					<h3 class="text-base">Oct 2021 - Jan 2022</h3>
+				</div>
+				<ul class="mt-2 list-disc space-y-1 pl-6">
+					<li>
+						Contributed to open source projects
+						<a target="_blank" href="https://github.com/apache/fineract">
+							<span class="underline">Apache Fineract</span>
+						</a> and
+						<a target="_blank" href="https://github.com/openmf/community-app">
+							<span class="underline">MifosX Community App</span>
+						</a>.
+					</li>
+					<li>Involved in the development of a microfinance app using Spring Boot and Angular.</li>
+				</ul>
+			</div>
+		</div>
 	</section>
 	<section class="mt-10">
 		<h2 class="title mb-4 text-xl">Blogs</h2>
