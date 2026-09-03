@@ -1,0 +1,29 @@
+---
+import { getCollection } from "astro:content";
+import BlogLayout from "../layouts/BlogLayout.astro";
+
+const posts = (await getCollection("posts", ({ data }) => import.meta.env.DEV || !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BlogLayout title="Home">
+  <div class="page-shell">
+    <section class="intro">
+      <p class="kicker">personal notes</p>
+      <h1>Notes from the terminal</h1>
+      <p class="lede">Short, practical writing about software, debugging, and the small details that change how code behaves.</p>
+    </section>
+    <section class="feed" aria-label="Recent posts">
+      {posts.map((post, index) => (
+        <article class="story">
+          <span class="rank" aria-hidden="true">{index + 1}.</span>
+          <div>
+            <h2><a href={`/posts/${post.id}`}>{post.data.title}</a></h2>
+            <p class="meta">{post.data.date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
+            <p class="summary">{post.data.description}</p>
+          </div>
+        </article>
+      ))}
+    </section>
+  </div>
+</BlogLayout>

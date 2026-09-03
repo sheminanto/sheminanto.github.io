@@ -1,0 +1,268 @@
+:root {
+  --accent: #b45309;
+  --background: #fbfaf7;
+  --code: #f1eee8;
+  --ink: #22201c;
+  --line: #e4ded4;
+  --muted: #706a60;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  color: var(--ink);
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+main {
+  min-height: 100vh;
+}
+
+.page-shell,
+.post-page {
+  width: min(100% - 40px, 780px);
+  margin: 0 auto;
+  padding: 72px 0 96px;
+}
+
+.intro {
+  max-width: 640px;
+  margin-bottom: 52px;
+}
+
+.kicker,
+.meta,
+.back-link,
+.post-tags {
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.kicker {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 680px;
+  margin-bottom: 14px;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.lede {
+  max-width: 620px;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 1.12rem;
+  line-height: 1.65;
+}
+
+.feed {
+  border-top: 1px solid var(--line);
+}
+
+.story {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.rank {
+  padding-top: 3px;
+  color: #aaa39a;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  text-align: right;
+}
+
+.story h2 {
+  margin: 0 0 5px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.story h2 a {
+  text-decoration: none;
+}
+
+.meta {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.summary {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  font-size: .97rem;
+  line-height: 1.6;
+}
+
+.post-page {
+  max-width: 740px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 42px;
+  font-size: 14px;
+}
+
+.back-link::before {
+  content: "< ";
+}
+
+.post-header {
+  margin-bottom: 44px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.post-header h1 {
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  line-height: 1.12;
+}
+
+.post-content {
+  font-size: 1.06rem;
+}
+
+.post-content h2 {
+  margin: 48px 0 12px;
+  font-size: 1.55rem;
+  line-height: 1.25;
+}
+
+.post-content h3 {
+  margin: 36px 0 10px;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.post-content p,
+.post-content ul,
+.post-content ol {
+  margin-bottom: 24px;
+}
+
+.post-content ul,
+.post-content ol {
+  padding-left: 1.4rem;
+}
+
+.post-content li {
+  margin-bottom: 8px;
+}
+
+.post-content a {
+  color: var(--accent);
+}
+
+.post-content code {
+  border-radius: 4px;
+  background: var(--code);
+  padding: 2px 5px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: .86em;
+}
+
+.post-content pre {
+  overflow-x: auto;
+  margin: 28px 0;
+  border: 1px solid #ded6ca;
+  border-radius: 6px;
+  background: #26231f;
+  color: #f7f0e5;
+  padding: 18px 20px;
+  line-height: 1.55;
+}
+
+.post-content pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: .88rem;
+}
+
+.post-content blockquote {
+  margin: 30px 0;
+  border-left: 3px solid var(--accent);
+  padding: 2px 0 2px 20px;
+  color: var(--muted);
+}
+
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 56px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.post-tags span {
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 16px;
+  }
+
+  .page-shell,
+  .post-page {
+    width: min(100% - 28px, 720px);
+    padding: 44px 0 72px;
+  }
+
+  .intro {
+    margin-bottom: 38px;
+  }
+
+  .story {
+    grid-template-columns: 26px 1fr;
+    gap: 10px;
+    padding: 18px 0;
+  }
+
+  .summary {
+    font-size: .94rem;
+  }
+}

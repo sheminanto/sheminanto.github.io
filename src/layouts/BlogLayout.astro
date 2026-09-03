@@ -1,0 +1,19 @@
+---
+import "../styles/global.css";
+
+interface Props { title?: string; description?: string; }
+const { title = "Home", description = "Notes on software, the web, and making things." } = Astro.props;
+const fullTitle = title === "Home" ? "yours truly" : `${title} — yours truly`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <title>{fullTitle}</title>
+  </head>
+  <body>
+    <main><slot /></main>
+  </body>
+</html>
