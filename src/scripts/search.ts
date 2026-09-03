@@ -39,7 +39,7 @@ const answerText = document.querySelector<HTMLElement>("#ai-answer-text");
 
 if (dataElement && input && searchForm && results && status && aiButton && answer && answerText) {
   const documents = JSON.parse(dataElement.textContent || "[]") as SearchDocument[];
-  const stopWords = new Set(["a", "an", "and", "are", "as", "at", "by", "for", "from", "in", "is", "of", "on", "or", "the", "to", "when", "with"]);
+  const stopWords = new Set(["a", "an", "and", "are", "as", "at", "by", "can", "do", "does", "for", "from", "how", "in", "is", "of", "on", "or", "the", "to", "what", "when", "which", "why", "with"]);
   const tokenize = (value: string) => value.toLowerCase().match(/[a-z0-9]+/g)?.filter((term) => !stopWords.has(term)) || [];
   const fields = (document: SearchDocument) => [
     [document.title, 4],
@@ -70,11 +70,40 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
   const escapeHtml = (value: string) => value.replace(/[&<>\"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" })[character] || character);
   const formatDate = (date: string) => new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
+  const editDistance = (left: string, right: string, limit: number) => {
+    if (Math.abs(left.length - right.length) > limit) return limit + 1;
+    let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+      const current = [leftIndex];
+      let minimum = current[0];
+      for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+        const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+        const distance = Math.min(
+          current[rightIndex - 1] + 1,
+          previous[rightIndex] + 1,
+          previous[rightIndex - 1] + cost,
+        );
+        current[rightIndex] = distance;
+        minimum = Math.min(minimum, distance);
+      }
+      if (minimum > limit) return limit + 1;
+      previous = current;
+    }
+    return previous[right.length];
+  };
+
+  const matchingTerms = (queryTerm: string) => {
+    const indexedTerms = [...termIndex.keys()];
+    const prefixMatches = indexedTerms.filter((indexedTerm) => indexedTerm.startsWith(queryTerm));
+    if (prefixMatches.length || queryTerm.length < 4) return prefixMatches;
+    return indexedTerms.filter((indexedTerm) => editDistance(queryTerm, indexedTerm, 1) <= 1);
+  };
+
   const search = (query: string, extraTerms: string[] = []) => {
     const queryTerms = [...new Set([...tokenize(query), ...extraTerms.flatMap(tokenize)])];
     if (!queryTerms.length) return documents.map((document) => ({ document, score: 0 }));
 
-    const terms = [...new Set(queryTerms.flatMap((queryTerm) => [...termIndex.keys()].filter((indexedTerm) => indexedTerm.startsWith(queryTerm))))];
+    const terms = [...new Set(queryTerms.flatMap(matchingTerms))];
     if (!terms.length) return [];
     const candidates = new Set<string>();
     for (const term of terms) termIndex.get(term)?.forEach((id) => candidates.add(id));
