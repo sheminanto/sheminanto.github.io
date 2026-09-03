@@ -11,7 +11,7 @@ const posts = (await getCollection("posts", ({ data }) => import.meta.env.DEV ||
     <section class="intro">
       <p class="kicker">personal notes</p>
       <h1>Notes from the terminal</h1>
-      <p class="lede">Short, practical writing about software, debugging, and the small details that change how code behaves.</p>
+      <p class="lede">Short, practical writing about programming, debugging, and the details that shape how code behaves.</p>
     </section>
     <section class="feed" aria-label="Recent posts">
       {posts.map((post, index) => (
