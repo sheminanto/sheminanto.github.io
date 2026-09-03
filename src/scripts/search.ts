@@ -75,18 +75,15 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
     let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
     for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
       const current = [leftIndex];
-      let minimum = current[0];
       for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
         const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
-        const distance = Math.min(
+        current[rightIndex] = Math.min(
           current[rightIndex - 1] + 1,
           previous[rightIndex] + 1,
           previous[rightIndex - 1] + cost,
         );
-        current[rightIndex] = distance;
-        minimum = Math.min(minimum, distance);
       }
-      if (minimum > limit) return limit + 1;
+      if (Math.min(...current) > limit) return limit + 1;
       previous = current;
     }
     return previous[right.length];
@@ -96,7 +93,8 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
     const indexedTerms = [...termIndex.keys()];
     const prefixMatches = indexedTerms.filter((indexedTerm) => indexedTerm.startsWith(queryTerm));
     if (prefixMatches.length || queryTerm.length < 4) return prefixMatches;
-    return indexedTerms.filter((indexedTerm) => editDistance(queryTerm, indexedTerm, 1) <= 1);
+    const limit = queryTerm.length >= 7 ? 2 : 1;
+    return indexedTerms.filter((indexedTerm) => editDistance(queryTerm, indexedTerm, limit) <= limit);
   };
 
   const search = (query: string, extraTerms: string[] = []) => {
