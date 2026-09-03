@@ -33,6 +33,10 @@ const searchData = JSON.stringify(searchDocuments).replace(/</g, "\\u003c");
       </div>
       <p class="search-status" aria-live="polite"></p>
     </form>
+    <section id="ai-answer" class="ai-answer" aria-live="polite" aria-label="AI answer" hidden>
+      <p class="ai-answer-label">AI answer</p>
+      <p id="ai-answer-text"></p>
+    </section>
     <section id="search-results" class="feed" aria-label="Recent posts">
       {posts.map((post, index) => (
         <article class="story" data-post-id={post.id}>

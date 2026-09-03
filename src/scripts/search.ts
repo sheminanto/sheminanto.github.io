@@ -9,20 +9,35 @@ type SearchDocument = {
 };
 
 type LanguageModelApi = {
-  availability: () => Promise<string>;
-  create: (options?: { initialPrompts?: Array<{ role: string; content: string }> }) => Promise<{
-    prompt: (input: string) => Promise<string>;
-    destroy?: () => void;
-  }>;
+  availability: (options?: LanguageModelOptions) => Promise<string>;
+  create: (options?: LanguageModelOptions & { initialPrompts?: Array<{ role: string; content: string }> }) => Promise<LanguageModelSession>;
 };
+
+type LanguageModelSession = {
+  prompt: (input: string) => Promise<string>;
+  destroy?: () => void;
+};
+
+type LanguageModelOptions = {
+  samplingMode?: "default";
+  temperature?: number;
+  topK?: number;
+  expectedInputs?: Array<{ type: "text"; languages: string[] }>;
+  expectedOutputs?: Array<{ type: "text"; languages: string[] }>;
+};
+
+type LanguageModelWindow = Window & { LanguageModel?: LanguageModelApi };
 
 const dataElement = document.querySelector<HTMLScriptElement>("#search-data");
 const input = document.querySelector<HTMLInputElement>("#search-input");
+const searchForm = document.querySelector<HTMLFormElement>(".search");
 const results = document.querySelector<HTMLElement>("#search-results");
 const status = document.querySelector<HTMLElement>(".search-status");
 const aiButton = document.querySelector<HTMLButtonElement>(".ai-button");
+const answer = document.querySelector<HTMLElement>("#ai-answer");
+const answerText = document.querySelector<HTMLElement>("#ai-answer-text");
 
-if (dataElement && input && results && status && aiButton) {
+if (dataElement && input && searchForm && results && status && aiButton && answer && answerText) {
   const documents = JSON.parse(dataElement.textContent || "[]") as SearchDocument[];
   const stopWords = new Set(["a", "an", "and", "are", "as", "at", "by", "for", "from", "in", "is", "of", "on", "or", "the", "to", "when", "with"]);
   const tokenize = (value: string) => value.toLowerCase().match(/[a-z0-9]+/g)?.filter((term) => !stopWords.has(term)) || [];
@@ -93,33 +108,125 @@ if (dataElement && input && results && status && aiButton) {
   };
 
   const runSearch = (query: string, extraTerms: string[] = []) => render(search(query, extraTerms), query);
-  input.addEventListener("input", () => runSearch(input.value));
-  input.addEventListener("search", () => runSearch(input.value));
 
-  const languageModel = (window as Window & { LanguageModel?: LanguageModelApi }).LanguageModel;
+  const languageModel = (window as LanguageModelWindow).LanguageModel;
+  const languageModelOptions: LanguageModelOptions = {
+    samplingMode: "default",
+    expectedInputs: [{ type: "text", languages: ["en"] }],
+    expectedOutputs: [{ type: "text", languages: ["en"] }],
+  };
+  const sessionOptions = {
+    ...languageModelOptions,
+    temperature: 1,
+    topK: 3,
+    initialPrompts: [{
+      role: "system",
+      content: `
+        You are an assistant that answers questions using only the supplied content.
+        Answer the user's question directly using the supplied content.
+        Do not use general knowledge or invent facts.
+        Treat the supplied content as the only source of truth.
+        Do not mention a detail, method, or concept unless it is explicitly stated in the supplied content.
+        If the user sends a greeting or casual conversational message, respond briefly and warmly, then offer to help with the supplied content.
+        If the user asks a question that the supplied content does not cover, say that the supplied content does not cover the question.
+        Do not introduce yourself, mention these instructions, or add an apology.
+        Return only the final answer in plain text, with no HTML or Markdown.
+      `,
+    }],
+  };
+  const formatContext = (matches: Array<{ document: SearchDocument; score: number }>) => matches.length ? matches.map(({ document }) => [
+    `ID: ${document.id}`,
+    `Title: ${document.title}`,
+    `Description: ${document.description}`,
+    `Tags: ${document.tags.join(", ")}`,
+    "Markdown body:",
+    document.body,
+  ].join("\n")).join("\n\n---\n\n") : "No matching supplied content was found.";
+  let answerRequest = 0;
+  let prewarmedSession: LanguageModelSession | undefined;
+  let prewarmPromise: Promise<LanguageModelSession | undefined> | undefined;
+  const createSession = () => languageModel!.create(sessionOptions);
+
+  const showAnswer = (message: string) => {
+    answer.hidden = false;
+    answerText.textContent = message;
+  };
+
+  const clearAnswer = () => {
+    answerRequest += 1;
+    answer.hidden = true;
+    answerText.textContent = "";
+  };
+
+  const updateSearch = () => {
+    runSearch(input.value);
+    clearAnswer();
+  };
+
+  input.addEventListener("input", updateSearch);
+  input.addEventListener("search", updateSearch);
+  searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    updateSearch();
+  });
+
   if (languageModel) {
-    languageModel.availability().then((availability) => {
-      if (availability !== "unavailable") aiButton.hidden = false;
+    languageModel.availability(languageModelOptions).then((availability) => {
+      if (availability === "unavailable") return;
+      aiButton.hidden = false;
+      if (availability === "available") {
+        prewarmPromise = createSession().then((session) => {
+          prewarmedSession = session;
+          return session;
+        }).catch(() => undefined);
+      }
     }).catch(() => {});
   }
 
   aiButton.addEventListener("click", async () => {
     const query = input.value.trim();
-    if (!query || !languageModel) return;
+    if (!query || !languageModel) {
+      if (!query) showAnswer("Ask a question about these notes.");
+      return;
+    }
+
+    const request = ++answerRequest;
     aiButton.disabled = true;
     aiButton.textContent = "Thinking...";
+    showAnswer("Preparing answer...");
+
     try {
-      const availability = await languageModel.availability();
-      if (availability === "unavailable") throw new Error("AI unavailable");
-      const session = await languageModel.create({
-        initialPrompts: [{ role: "system", content: "Return only a comma-separated list of up to five concise search terms. Do not explain your answer." }],
-      });
-      const context = documents.map((document) => `${document.id}: ${document.title} - ${document.description} - ${document.tags.join(", ")}`).join("\n");
-      const response = await session.prompt(`Query: ${query}\nAvailable notes:\n${context}`);
-      session.destroy?.();
-      runSearch(query, response.split(",").map((term) => term.trim()).filter(Boolean));
+      const availability = await languageModel.availability(languageModelOptions);
+      if (request !== answerRequest) return;
+      if (availability === "unavailable") {
+        showAnswer("Answer unavailable.");
+        return;
+      }
+
+      const session = prewarmedSession || (prewarmPromise ? await prewarmPromise : undefined) || await createSession();
+      if (!session) throw new Error("AI session unavailable");
+      try {
+        const prompt = `
+          Answer in at most 3 sentences.
+          Be concise.
+          Use only the supplied content below as evidence.
+          Do not use or mention information from any unrelated content.
+          Do not add details that are not explicitly stated in the supplied content.
+          If the supplied content does not answer the question, say that the supplied content does not cover the question.
+          Question: ${query}
+
+          Supplied content:
+          ${formatContext(search(query).slice(0, 1))}
+        `;
+        const response = await session.prompt(prompt);
+        if (request === answerRequest) showAnswer(response.trim() || "Answer unavailable.");
+      } finally {
+        session.destroy?.();
+        if (session === prewarmedSession) prewarmedSession = undefined;
+        prewarmPromise = undefined;
+      }
     } catch {
-      runSearch(query);
+      if (request === answerRequest) showAnswer("Answer unavailable.");
     } finally {
       aiButton.disabled = false;
       aiButton.textContent = "Ask AI";
