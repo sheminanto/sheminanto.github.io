@@ -210,6 +210,11 @@ h1 {
   text-decoration: none;
 }
 
+.story h2 a:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 3px;
+}
+
 .meta {
   margin: 0 0 8px;
   font-size: 13px;

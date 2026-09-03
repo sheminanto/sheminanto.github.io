@@ -190,6 +190,31 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
     clearAnswer();
   };
 
+  const resultLinks = () => [...results.querySelectorAll<HTMLAnchorElement>(".story h2 a")];
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowDown") return;
+    const firstLink = resultLinks()[0];
+    if (!firstLink) return;
+    event.preventDefault();
+    firstLink.focus();
+  });
+
+  results.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const links = resultLinks();
+    const currentIndex = links.indexOf(document.activeElement as HTMLAnchorElement);
+    if (currentIndex < 0) return;
+
+    event.preventDefault();
+    const nextIndex = event.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1;
+    if (nextIndex >= 0 && nextIndex < links.length) {
+      links[nextIndex].focus();
+    } else if (event.key === "ArrowUp" && currentIndex === 0) {
+      input.focus();
+    }
+  });
+
   input.addEventListener("input", updateSearch);
   input.addEventListener("search", updateSearch);
   searchForm.addEventListener("submit", (event) => {
