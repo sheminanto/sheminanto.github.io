@@ -4,6 +4,18 @@ import BlogLayout from "../layouts/BlogLayout.astro";
 
 const posts = (await getCollection("posts", ({ data }) => import.meta.env.DEV || !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const searchDocuments = posts.map((post) => ({
+  id: post.id,
+  title: post.data.title,
+  description: post.data.description,
+  tags: post.data.tags,
+  body: post.body,
+  date: post.data.date.toISOString(),
+  url: `/posts/${post.id}`,
+}));
+
+const searchData = JSON.stringify(searchDocuments).replace(/</g, "\\u003c");
 ---
 
 <BlogLayout title="Home">
@@ -13,9 +25,17 @@ const posts = (await getCollection("posts", ({ data }) => import.meta.env.DEV ||
       <h1>Notes from the terminal</h1>
       <p class="lede">Short, practical writing about programming, debugging, and the details that shape how code behaves.</p>
     </section>
-    <section class="feed" aria-label="Recent posts">
+    <form class="search" role="search">
+      <label for="search-input">Search notes</label>
+      <div class="search-row">
+        <input id="search-input" name="q" type="search" autocomplete="off" placeholder="Search notes..." />
+        <button class="ai-button" type="button" hidden>Ask AI</button>
+      </div>
+      <p class="search-status" aria-live="polite"></p>
+    </form>
+    <section id="search-results" class="feed" aria-label="Recent posts">
       {posts.map((post, index) => (
-        <article class="story">
+        <article class="story" data-post-id={post.id}>
           <span class="rank" aria-hidden="true">{index + 1}.</span>
           <div>
             <h2><a href={`/posts/${post.id}`}>{post.data.title}</a></h2>
@@ -25,5 +45,8 @@ const posts = (await getCollection("posts", ({ data }) => import.meta.env.DEV ||
         </article>
       ))}
     </section>
+    <script type="application/json" id="search-data" set:html={searchData} />
   </div>
 </BlogLayout>
+
+<script src="../scripts/search.ts"></script>
