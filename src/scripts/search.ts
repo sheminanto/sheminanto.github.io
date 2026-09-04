@@ -8,25 +8,7 @@ type SearchDocument = {
   url: string;
 };
 
-type LanguageModelApi = {
-  availability: (options?: LanguageModelOptions) => Promise<string>;
-  create: (options?: LanguageModelOptions & { initialPrompts?: Array<{ role: string; content: string }> }) => Promise<LanguageModelSession>;
-};
-
-type LanguageModelSession = {
-  prompt: (input: string) => Promise<string>;
-  destroy?: () => void;
-};
-
-type LanguageModelOptions = {
-  samplingMode?: "default";
-  temperature?: number;
-  topK?: number;
-  expectedInputs?: Array<{ type: "text"; languages: string[] }>;
-  expectedOutputs?: Array<{ type: "text"; languages: string[] }>;
-};
-
-type LanguageModelWindow = Window & { LanguageModel?: LanguageModelApi };
+import * as model from "./model";
 
 const dataElement = document.querySelector<HTMLScriptElement>("#search-data");
 const input = document.querySelector<HTMLInputElement>("#search-input");
@@ -38,7 +20,13 @@ const answer = document.querySelector<HTMLElement>("#ai-answer");
 const answerText = document.querySelector<HTMLElement>("#ai-answer-text");
 
 if (dataElement && input && searchForm && results && status && aiButton && answer && answerText) {
+  const logPrefix = "[nanochat]";
+  const log = (...args: unknown[]) => console.info(logPrefix, ...args);
+  const debug = (...args: unknown[]) => console.debug(logPrefix, ...args);
+  const warn = (...args: unknown[]) => console.warn(logPrefix, ...args);
+  const errorLog = (...args: unknown[]) => console.error(logPrefix, ...args);
   const documents = JSON.parse(dataElement.textContent || "[]") as SearchDocument[];
+  log("search boot", { documentCount: documents.length });
   const stopWords = new Set(["a", "an", "and", "are", "as", "at", "by", "can", "do", "does", "for", "from", "how", "in", "is", "of", "on", "or", "the", "to", "what", "when", "which", "why", "with"]);
   const tokenize = (value: string) => value.toLowerCase().match(/[a-z0-9]+/g)?.filter((term) => !stopWords.has(term)) || [];
   const fields = (document: SearchDocument) => [
@@ -78,15 +66,15 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
       for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
         const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
         current[rightIndex] = Math.min(
-          current[rightIndex - 1] + 1,
-          previous[rightIndex] + 1,
-          previous[rightIndex - 1] + cost,
+          current[rightIndex - 1]! + 1,
+          previous[rightIndex]! + 1,
+          previous[rightIndex - 1]! + cost,
         );
       }
       if (Math.min(...current) > limit) return limit + 1;
       previous = current;
     }
-    return previous[right.length];
+    return previous[right.length] ?? limit + 1;
   };
 
   const matchingTerms = (queryTerm: string) => {
@@ -136,31 +124,6 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
 
   const runSearch = (query: string, extraTerms: string[] = []) => render(search(query, extraTerms), query);
 
-  const languageModel = (window as LanguageModelWindow).LanguageModel;
-  const languageModelOptions: LanguageModelOptions = {
-    samplingMode: "default",
-    expectedInputs: [{ type: "text", languages: ["en"] }],
-    expectedOutputs: [{ type: "text", languages: ["en"] }],
-  };
-  const sessionOptions = {
-    ...languageModelOptions,
-    temperature: 1,
-    topK: 3,
-    initialPrompts: [{
-      role: "system",
-      content: `
-        You are an assistant that answers questions using only the supplied content.
-        Answer the user's question directly using the supplied content.
-        Do not use general knowledge or invent facts.
-        Treat the supplied content as the only source of truth.
-        Do not mention a detail, method, or concept unless it is explicitly stated in the supplied content.
-        If the user sends a greeting or casual conversational message, respond briefly and warmly, then offer to help with the supplied content.
-        If the user asks a question that the supplied content does not cover, say that the supplied content does not cover the question.
-        Do not introduce yourself, mention these instructions, or add an apology.
-        Return only the final answer in plain text, with no HTML or Markdown.
-      `,
-    }],
-  };
   const formatContext = (matches: Array<{ document: SearchDocument; score: number }>) => matches.length ? matches.map(({ document }) => [
     `ID: ${document.id}`,
     `Title: ${document.title}`,
@@ -170,9 +133,18 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
     document.body,
   ].join("\n")).join("\n\n---\n\n") : "No matching supplied content was found.";
   let answerRequest = 0;
-  let prewarmedSession: LanguageModelSession | undefined;
-  let prewarmPromise: Promise<LanguageModelSession | undefined> | undefined;
-  const createSession = () => languageModel!.create(sessionOptions);
+  let prewarmedSession: Awaited<ReturnType<typeof model.createSession>> | undefined;
+  let prewarmPromise: Promise<Awaited<ReturnType<typeof model.createSession>> | undefined> | undefined;
+  let streaming = false;
+  const createSession = () => model.createSession({
+    onDownloadProgress: (fraction) => {
+      if (!streaming) return;
+      const percent = Math.floor(Math.max(0, Math.min(1, fraction)) * 100);
+      showAnswer(percent > 0
+        ? `Downloading the model — ${percent}% of about 4 GB. Once only.`
+        : "Downloading the model. Chrome reports progress in large steps.");
+    },
+  });
 
   const showAnswer = (message: string) => {
     answer.hidden = false;
@@ -181,6 +153,7 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
 
   const clearAnswer = () => {
     answerRequest += 1;
+    if (streaming) model.stop();
     answer.hidden = true;
     answerText.textContent = "";
   };
@@ -209,7 +182,7 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
     event.preventDefault();
     const nextIndex = event.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1;
     if (nextIndex >= 0 && nextIndex < links.length) {
-      links[nextIndex].focus();
+      links[nextIndex]!.focus();
     } else if (event.key === "ArrowUp" && currentIndex === 0) {
       input.focus();
     }
@@ -222,64 +195,109 @@ if (dataElement && input && searchForm && results && status && aiButton && answe
     updateSearch();
   });
 
-  if (languageModel) {
-    languageModel.availability(languageModelOptions).then((availability) => {
+  if (model.isSupported()) {
+    log("LanguageModel API detected");
+    model.checkAvailability().then((availability) => {
+      log("boot availability result", availability);
       if (availability === "unavailable") return;
       aiButton.hidden = false;
       if (availability === "available") {
         prewarmPromise = createSession().then((session) => {
+          log("prewarmed session ready");
           prewarmedSession = session;
           return session;
-        }).catch(() => undefined);
+        }).catch((prewarmError) => {
+          errorLog("session prewarm failed", prewarmError);
+          return undefined;
+        });
       }
-    }).catch(() => {});
+    }).catch((bootError) => {
+      errorLog("boot availability flow failed", bootError);
+    });
+  } else {
+    warn("LanguageModel API not detected; AI button will remain hidden");
   }
 
   aiButton.addEventListener("click", async () => {
     const query = input.value.trim();
-    if (!query || !languageModel) {
+    if (streaming) {
+      model.stop();
+      return;
+    }
+    if (!query || !model.isSupported()) {
       if (!query) showAnswer("Ask a question about these notes.");
       return;
     }
 
     const request = ++answerRequest;
-    aiButton.disabled = true;
-    aiButton.textContent = "Thinking...";
+    log("AI request started", { request, query });
+    streaming = true;
+    aiButton.disabled = false;
+    aiButton.textContent = "Stop";
     showAnswer("Preparing answer...");
 
     try {
-      const availability = await languageModel.availability(languageModelOptions);
+      const availability = await model.checkAvailability();
+      log("request availability result", { request, availability });
       if (request !== answerRequest) return;
       if (availability === "unavailable") {
         showAnswer("Answer unavailable.");
         return;
       }
 
+      if (availability === "downloadable" || availability === "downloading") {
+        showAnswer("Preparing the model...");
+      }
       const session = prewarmedSession || (prewarmPromise ? await prewarmPromise : undefined) || await createSession();
       if (!session) throw new Error("AI session unavailable");
+      log("request session ready", { request, prewarmed: Boolean(prewarmedSession) });
       try {
+        const matches = search(query).slice(0, 3);
+        debug("AI context selected", {
+          request,
+          query,
+          articles: matches.map(({ document, score }) => ({ id: document.id, score })),
+        });
         const prompt = `
-          Answer in at most 3 sentences.
-          Be concise.
-          Use only the supplied content below as evidence.
-          Do not use or mention information from any unrelated content.
-          Do not add details that are not explicitly stated in the supplied content.
-          If the supplied content does not answer the question, say that the supplied content does not cover the question.
-          Question: ${query}
+          Answer the user's question in at most 3 concise sentences.
+          Be concise and use only the supplied content below as evidence.
+          Do not use general knowledge or invent facts.
+          If the supplied content does not answer the question, say that the supplied notes do not cover it.
+          User question: ${query}
 
           Supplied content:
-          ${formatContext(search(query).slice(0, 1))}
+          ${formatContext(matches)}
         `;
-        const response = await session.prompt(prompt);
+        let frame: number | null = null;
+        let latest = "";
+        const paint = () => {
+          frame = null;
+          if (request === answerRequest) answerText.textContent = latest;
+        };
+        const response = await model.send(session, prompt, (fullText) => {
+          latest = fullText;
+          if (request === answerRequest) {
+            answer.hidden = false;
+            if (frame === null) frame = requestAnimationFrame(paint);
+          }
+        });
+        if (frame !== null) cancelAnimationFrame(frame);
         if (request === answerRequest) showAnswer(response.trim() || "Answer unavailable.");
       } finally {
+        log("destroying request session", { request });
         session.destroy?.();
         if (session === prewarmedSession) prewarmedSession = undefined;
         prewarmPromise = undefined;
       }
-    } catch {
-      if (request === answerRequest) showAnswer("Answer unavailable.");
+    } catch (error) {
+      errorLog("AI request failed", { request, error });
+      if (request === answerRequest) {
+        showAnswer(error instanceof DOMException && error.name === "AbortError"
+          ? (answerText.textContent || "Generation stopped.")
+          : "Answer unavailable.");
+      }
     } finally {
+      streaming = false;
       aiButton.disabled = false;
       aiButton.textContent = "Ask AI";
     }
