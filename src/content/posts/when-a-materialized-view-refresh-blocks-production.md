@@ -1,11 +1,11 @@
 ---
 title: "When a materialized view refresh blocks production"
-description: "How a routine PostgreSQL materialized view refresh blocked API requests and pushed a production database into a resource crisis."
+description: "How a PostgreSQL materialized view refresh blocked API reads, and what the incident revealed about connection capacity."
 date: 2026-09-16
 tags: [postgres, databases, rails, performance]
 ---
 
-One day, a simple API query started taking minutes:
+An API query that returned a short list of options started taking minutes:
 
 ```sql
 SELECT option_code
@@ -13,9 +13,7 @@ FROM organization_option_codes
 WHERE organization_id = $1;
 ```
 
-This query only returned a small list of options. It should have been fast.
-
-But `pg_stat_activity` showed many requests in this state:
+The query was not spending minutes finding rows. `pg_stat_activity` showed requests waiting on a relation lock:
 
 ```text
 state           = active
@@ -23,101 +21,90 @@ wait_event_type = Lock
 wait_event      = relation
 ```
 
-The requests were not slow because PostgreSQL was taking a long time to find the rows. They were waiting for permission to read the relation.
-
-The blocker was:
+The blocker was a background job running:
 
 ```sql
 REFRESH MATERIALIZED VIEW organization_option_codes;
 ```
 
-## What happened?
+## The failure mode
 
-The names in this post are generic, but the setup was straightforward:
+A materialized view stores the result of its defining query. A refresh recomputes that query and replaces the stored contents.
 
-- an API read from a materialized view;
-- a background job refreshed that view;
-- the refresh used PostgreSQL's default mode;
-- the refresh took a long time.
+The default refresh acquires an `ACCESS EXCLUSIVE` lock on the materialized view. A plain `SELECT` takes an `ACCESS SHARE` lock, and those modes conflict. Reads therefore wait until the refresh releases its lock.
 
-A materialized view stores the result of a query. When PostgreSQL refreshes it, it runs the underlying query again and replaces the stored result.
-
-The default refresh takes an `ACCESS EXCLUSIVE` lock on the materialized view. A normal `SELECT` takes an `ACCESS SHARE` lock. These locks conflict, so reads must wait until the refresh finishes.
-
-The production sequence looked like this:
+The sequence was:
 
 ```text
 refresh starts
   -> materialized view is locked
-  -> API requests try to read it
-  -> API requests wait
-  -> more requests pile up
-  -> database connections and web workers are consumed
+  -> API reads wait
+  -> waiting requests retain connections and web workers
+  -> request and connection capacity is consumed
 ```
 
-This was not a deadlock. Nothing was waiting in a cycle. Many readers were simply waiting behind one long-running operation. This is often called a lock convoy.
+This is lock contention, not necessarily a deadlock or a CPU problem. A deadlock requires a cycle of sessions waiting on one another. Here, readers were waiting behind one long-running operation.
 
-## Why did the database become unhealthy?
+## What the connection count showed
 
-The refresh itself was doing a lot of work. It was reading the source data from disk:
+The primary had 629 connections. Most were idle:
 
-```text
-wait_event_type = IO
-wait_event      = DataFileRead
-```
+| Application | State | Count |
+| --- | --- | ---: |
+| `bin/jobs` (Solid Queue) | idle | 142 |
+| `bin/jobs` | idle | 140 |
+| `bin/jobs` | idle | 140 |
+| `bin/jobs` | idle | 135 |
+| `puma` (web) | active | 16 |
+| `puma` | active | 16 |
+| `puma` | active | 14 |
+| `puma` | active | 12 |
+| `puma` | idle | 3 |
+| `puma` | idle | 2 |
+| `bin/rails` (console) | idle/active | 4 (one per host) |
+| Everything else | small idle/active tails | 5 |
 
-Other expensive queries were running at the same time, so they competed for the same database resources and made the refresh slower.
+The Solid Queue processes accounted for 557 idle connections. Puma had 58 active and 5 idle connections. CPU and memory usage for both Puma and Solid Queue were normal.
 
-While that was happening, API requests continued to arrive and wait for the view. The waiting requests used database connections and application workers. Eventually, the database reported very high CPU usage and the application became unhealthy.
+That distinction matters: 629 connections does not mean 629 queries were actively using CPU. However, a connection can still be a capacity problem. A request waiting on a lock may retain its connection and web worker, leaving less room for new work even while CPU and memory look healthy. The connection count must be interpreted alongside `state`, wait events, pool limits, and request latency.
 
-The lock was not necessarily using all the CPU by itself. The incident was the result of several things happening together:
+## Finding the blocker
 
-- a long-running refresh;
-- IO pressure from rebuilding the view;
-- user requests waiting for the view;
-- other expensive queries competing for resources.
-
-## How we found the blocker
-
-During an incident, this is a useful first check:
+Start by finding sessions waiting on locks and the sessions blocking them:
 
 ```sql
 SELECT
-  pid,
-  clock_timestamp() - query_start AS running_for,
-  wait_event_type,
-  wait_event,
-  left(query, 200) AS query
-FROM pg_stat_activity
-WHERE state <> 'idle'
-ORDER BY query_start;
+  blocked.pid AS blocked_pid,
+  clock_timestamp() - blocked.query_start AS blocked_for,
+  blocked.wait_event_type,
+  blocked.wait_event,
+  blocking.pid AS blocking_pid,
+  clock_timestamp() - blocking.query_start AS blocking_for,
+  left(blocking.query, 200) AS blocking_query
+FROM pg_stat_activity AS blocked
+CROSS JOIN LATERAL unnest(pg_blocking_pids(blocked.pid)) AS blocker(pid)
+JOIN pg_stat_activity AS blocking ON blocking.pid = blocker.pid
+WHERE blocked.wait_event_type = 'Lock';
 ```
 
-Look for two things:
+Then inspect the materialized view and its refresh job. `pg_locks` is useful when you need the lock mode and relation involved. A query that is merely `active` is not necessarily doing useful work; its `wait_event` tells you whether it is running or waiting.
 
-- requests with `wait_event_type = 'Lock'`;
-- a long-running query that is operating on the same table or materialized view.
+## The usual fix: refresh concurrently
 
-PostgreSQL's [monitoring documentation](https://www.postgresql.org/docs/current/monitoring-stats.html) explains these wait events, and `pg_locks` can be used when more detailed lock information is needed.
-
-## The safer option: concurrent refreshes
-
-PostgreSQL supports a refresh mode that does not block normal reads:
+For a populated materialized view, PostgreSQL can refresh without blocking ordinary reads:
 
 ```sql
 REFRESH MATERIALIZED VIEW CONCURRENTLY organization_option_codes;
 ```
 
-With `CONCURRENTLY`, users can continue reading the existing data while PostgreSQL builds the new version.
+The existing version remains available while PostgreSQL builds the replacement. `CONCURRENTLY` requires:
 
-There are a few requirements:
+- the view is already populated;
+- a unique index exists on the view;
+- the index uses only column names, covers every row, and is not partial;
+- no other refresh is running for that view.
 
-- the materialized view must already contain data;
-- it must have a qualifying unique index;
-- the index must cover every row and use actual columns, not expressions or a partial `WHERE` clause;
-- only one refresh can run for a materialized view at a time.
-
-For example, if an organization cannot have the same option code twice:
+If `(organization_id, option_code)` is genuinely unique, the index could be:
 
 ```sql
 CREATE UNIQUE INDEX CONCURRENTLY
@@ -125,60 +112,55 @@ CREATE UNIQUE INDEX CONCURRENTLY
 ON organization_option_codes (organization_id, option_code);
 ```
 
-Only add this index if that combination is truly unique in the data.
+Do not add this index merely to satisfy `CONCURRENTLY`: it must represent a real invariant in the materialized-view result.
 
-In Rails, the refresh should make the mode explicit. The exact helper depends on the library, but the intent should look like this:
+In Rails, execute the exact PostgreSQL command rather than relying on a helper whose refresh mode is unclear:
 
 ```ruby
-DatabaseViews.refresh(
-  :organization_option_codes,
-  concurrently: true
-)
+class RefreshOrganizationOptionCodesJob < ApplicationJob
+  def perform
+    ApplicationRecord.connection.execute(<<~SQL)
+      REFRESH MATERIALIZED VIEW CONCURRENTLY organization_option_codes
+    SQL
+  end
+end
 ```
 
-The important thing is to check the SQL generated by the helper. A method that sounds like a refresh may still be using the blocking default.
+Run the refresh outside an explicit application transaction. If the refresh can be enqueued more than once, also serialize it—for example, with a PostgreSQL advisory lock or a job uniqueness mechanism. `CONCURRENTLY` still permits only one refresh of a given materialized view at a time.
 
-## Other safeguards
+## Guardrails
 
-Concurrent refreshes reduce reader blocking, but refresh jobs still need limits:
+Concurrent refresh removes the main reader-blocking failure mode, but it does not make a refresh free or bounded. Add operational guardrails:
 
-- Set a `statement_timeout` so a refresh cannot run forever.
-- Set a `lock_timeout` so it fails quickly if it cannot get its initial lock.
-- Prevent two refresh jobs from running at the same time.
-- Log how long each refresh takes.
-- Alert on long refreshes, blocked requests, and connection-pool pressure.
-- Run large reporting queries outside the busiest refresh window when possible.
+- measure and log refresh duration;
+- set an appropriate `statement_timeout` for the refresh session;
+- set a short `lock_timeout` so startup lock contention fails quickly;
+- alert on blocked reads, refresh duration, and connection-pool saturation;
+- prevent duplicate refresh jobs;
+- schedule expensive refreshes away from the busiest periods when practical.
 
-Timeouts do not make a query faster. They limit how much damage a slow query can cause.
+Be deliberate about timeout scope. A session-level setting can affect subsequent statements on a pooled Rails connection, so reset it or use a dedicated refresh connection.
 
-## Do we need a materialized view at all?
+## Do you need a materialized view?
 
-Materialized views are useful for expensive queries where slightly stale data is acceptable. But they may be unnecessary for small lookup lists.
+For a small lookup list, a materialized view may add more operational risk than value. Consider an indexed query against ordinary tables, a lookup table, or an application cache if the data and freshness requirements allow it.
 
-For simple options or dropdown data, consider:
-
-- a normal lookup table;
-- an indexed query on the source tables;
-- an application cache;
-- a separately refreshed table.
-
-The best choice depends on the size of the data and how fresh it needs to be. The important question is:
-
-> What happens to the user-facing request while this data is being rebuilt?
+The important design question is not only how quickly the view can be read. It is what happens to a user-facing request while the view is being rebuilt.
 
 ## The lesson
 
-A materialized view is not just a cached table. Its refresh strategy affects production availability.
+A materialized view is not just a cached table; its refresh strategy is part of the availability design.
 
-Before using one behind an API endpoint, check:
+Before putting one behind an API endpoint, verify:
 
-1. Can it be refreshed concurrently?
-2. Does it have the unique index required for that?
-3. What happens if the refresh is slow or fails?
+1. whether it can be refreshed concurrently;
+2. whether the required unique index is valid for the data;
+3. what happens when a refresh is slow, duplicated, or fails.
 
-For user-facing lookup data, slightly stale data is usually better than an unavailable endpoint.
+For lookup data, slightly stale results are often preferable to blocked reads.
 
 ## Further reading
 
 - [PostgreSQL: `REFRESH MATERIALIZED VIEW`](https://www.postgresql.org/docs/current/sql-refreshmaterializedview.html)
 - [PostgreSQL: Explicit Locking](https://www.postgresql.org/docs/current/explicit-locking.html)
+- [PostgreSQL: Monitoring Database Activity](https://www.postgresql.org/docs/current/monitoring-stats.html)
